@@ -10,6 +10,7 @@ with PdfPages(pdfname) as pdf:
 	image_data = f[0].data
 	tam = image_data[0].shape
 	#Plot image for each frame
+	# if loop is removed,one frame of image will be plotted
 	for frameno in range (1,64):
 		pylab.clf()
 		pylab.gray();
