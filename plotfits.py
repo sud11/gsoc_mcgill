@@ -1,13 +1,10 @@
 # Plot FITS images and save them in PDF
-# Plot FITS images and save them in PDF
 # Corrected to include mediam image of 64 frames
+# Corrected to show images in pixelated form
 import pylab
 import pyfits
 from matplotlib.backends.backend_pdf import PdfPages
-import pylab
-import pyfits
 import numpy as np
-from matplotlib.backends.backend_pdf import PdfPages
 
 pdfname = 'imagespdf.pdf'
 with PdfPages(pdfname) as pdf:
@@ -28,12 +25,12 @@ with PdfPages(pdfname) as pdf:
 	pdf.savefig()
 	#Plot image for each frame
 	for frameno in range (1,64):
-		pylab.clf()
-		pylab.gray();
-		pylab.imshow(image_data[frameno])
-		pylab.xlabel('x pixels')
-		pylab.ylabel('y pixels')
-		pylab.title('frame number #'+ str(frameno)  )
-		pylab.ylim([0, tam[0]])
-		pylab.xlim([0, tam[1]])
+		plt.clf()
+		plt.gray();
+		plt.imshow(stacked, interpolation='none',cmap='gray')
+		plt.xlabel('x pixels')
+		plt.ylabel('y pixels')
+		plt.title('frame number #'+ str(frameno)  )
+		plt.ylim([0, tam[0]])
+		plt.xlim([0, tam[1]])
 		pdf.savefig()
