@@ -37,7 +37,7 @@ while(n<64):
 	#Setting negative values to 0
 	bgsubimg[n]= bgsubimg[n].clip(min =0)
 	plt.clf()
-	plt.imshow(bgsubimg[n])
+	plt.imshow(bgsubimg[n],interpolation='none',cmap='gray')
 	plt.colorbar()
 	n+=1
 	#plt.savefig(str(n)) #To save the img

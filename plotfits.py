@@ -16,7 +16,7 @@ with PdfPages(pdfname) as pdf:
 	stacked=np.median( image_data, axis=0)	
 	pylab.clf()
 	pylab.gray()
-	pylab.imshow(stacked)
+	pylab.imshow(stacked,interpolation='none',cmap='gray')
 	pylab.title('Median image of 64 frames')
 	pylab.xlabel('x pixels')
 	pylab.ylabel('y pixels')
