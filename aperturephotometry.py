@@ -1,3 +1,4 @@
+# Perform aperture photometry and find stellar flux
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
@@ -7,9 +8,13 @@ from astropy.stats import sigma_clip
 from photutils import CircularAperture
 from photutils import aperture_photometry
 from numpy import std
-
-def sigmaclip(image_data):
+import glob
+import csv
+import os
+tossed = 0
+def sigmaclip(image_data,fname):
 	global badframetable
+	global tossed
 	sig_clipped_data=sigma_clip(image_data, sigma=4, iters=2, cenfunc=np.median,axis=0)
 	for i in range (1,64):
 		oldstar=image_data[i,13:19,13:19]
@@ -68,9 +73,7 @@ def aperphot(image_data,ape_radius,cx,cy):
 		aperture=CircularAperture(position,r=ape_radius)
 		phot_table=aperture_photometry(image_data[i,:,:],aperture)
 		temp=phot_table['aperture_sum']
-		print temp
-		#ape_sum[i]=phot_table['aperture_sum']
-	print ape_sum.shape
+		ape_sum[i]=phot_table['aperture_sum']
 	return ape_sum
 def badframes(badframetable):
 	with open('badframes.csv', 'wb') as outcsv:
@@ -79,16 +82,44 @@ def badframes(badframetable):
 		for item in badframetable:
 			writer.writerow(item)		# Write item to outcsv
 	return 
+def tocsv(ape_sum,fname):
+	with open('aperture_photometry_auxfiles/stellarflux/'+fname[fname.find('ch2/bcd/')+8:fname.find('.fits')] + '.csv', 'wb') as outcsv:
+		writer = csv.writer(outcsv, delimiter=',', quotechar='|', quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
+		writer.writerow(['Frame number', 'Stellar Flux'])
+		frameno= np.arange(1,65)
+		temp= [ frameno,ape_sum]
+		temp=zip(*temp)
+		for item in temp:
+			writer.writerow(item)
 
+# Table to store the details of bad frames tossed out during sigma clipping
 badframetable=[]
-filename='SPITZER_I2_20150000_0000_0000_1_bcd'
-filepath='SPITZER_I2_20150000_0000_0000_1_bcd.fits'
-f=fits.open(filepath)
-image_data=f[0].data
-filtered_data=sigmaclip(image_data)
-bgsubimg=bgsubtract(filtered_data)
-cx,cy= centroid(bgsubimg)
-ape_sum=aperphot(bgsubimg,2.5,cx,cy)
+# Number of directories to scan for
+ndirec=1
+
+# Starting aor number
+direc=20150000
+# Stores the file names
+fnames=[]
+for i in range(ndirec):
+	path="/home/hema/Documents/mcgill/XO-3_b_sim_ch2_150702/r"+str(direc)+"/ch2/bcd"		# Resolving path to read file
+	fnames.extend(  [filename for filename in glob.glob(os.path.join(path, '*bcd.fits'))])
+	direc+=1
+# To get the file names in alphabetical order
+fnames.sort()
+# Number of files scanned
+nfiles=len(fnames)
+
+for i in range (nfiles):
+	fname=fnames[i]
+	f=fits.open(fname)
+	image_data=f[0].data
+	filtered_data=sigmaclip(image_data,fname[fname.find('ch2/bcd/')+8:])
+	bgsubimg=bgsubtract(filtered_data)
+	cx,cy= centroid(bgsubimg)
+	ape_sum=aperphot(bgsubimg,2.5,cx,cy)
+	tocsv(ape_sum,fname)	#Write the calculated stellar flux of 64 frames into csv file
+
 # Make a csv file for the badframes
 badframes(badframetable);
 '''
