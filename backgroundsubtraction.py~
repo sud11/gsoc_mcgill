@@ -31,13 +31,14 @@ while(n<64):
 		continue
 	#Excludes NAN values in the calculations
 	#bg_avg stores the average flux of the background
-	bg_avg=np.median(masked[n,:,:])
+	bg_avg=np.mean(masked[n,:,:])
 	#Subtract the mean 
 	bgsubimg[n]= bgsubimg[n,:,:] - bg_avg
 	#Setting negative values to 0
 	bgsubimg[n]= bgsubimg[n].clip(min =0)
 	plt.clf()
 	plt.imshow(bgsubimg[n],interpolation='none',cmap='gray')
+	plt.imshow(stacked, interpolation='none',cmap='gray')
 	plt.colorbar()
 	n+=1
 	#plt.savefig(str(n)) #To save the img

@@ -12,7 +12,7 @@ Step 2-Background subtraction for each frame of the image
 
 1.Mask the central 16 pixels for every frame of the image.
 2.Do steps 2 and 3 for frames 0 to 64 exluding the outlier frames (0 and 57)
-2.Calculate the mean of pixel values.This is the mean background flux (bg_avg) of that frame of the image.
+2.Calculate the median of pixel values.This is the median background flux (bg_avg) of that frame of the image.
 3.Subtract bg_avg from each pixel of that frame of image.
 
 **PS: Remove bad frames before sigmaclipping (1st and 58th frame)
@@ -25,11 +25,11 @@ from astropy.io import fits
 from astropy.stats import sigma_clip
 from numpy import std
 
-def sigmaclip(bgsubimg):
+def sigmaclip(image_data):
 	filtered_data = sigma_clip(image_data, sigma=4, iters=2, cenfunc=np.median,axis=0)
 	return filtered_data
 def bgsubtract(image_data):
-	bgsubimg=image_data	
+	bgsubimg=image_data
 	#Creating the mask for central 16 pixels for back
 	x=np.ndarray ( shape=(64,32,32), dtype=bool)
 	xmask=np.ma.make_mask(x,copy=True, shrink=True, dtype=np.bool)
@@ -45,7 +45,7 @@ def bgsubtract(image_data):
 			continue
 		#Excludes NAN values in the calculations
 		#bg_avg stores the average flux of the background
-		bg_avg=np.mean(masked[n,:,:])
+		bg_avg=np.median(masked[n,:,:])
 		#Subtract the mean 
 		bgsubimg[n]= bgsubimg[n,:,:] - bg_avg
 		#Setting negative values to 0
