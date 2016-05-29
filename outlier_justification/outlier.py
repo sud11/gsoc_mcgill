@@ -1,6 +1,6 @@
 # To justify why 1st and 58 frames are outliers
 # Do an aperture photometry and verify.
-
+# Data tested with - r46468096
 import numpy as np
 import matplotlib
 import matplotlib.pyplot as plt
@@ -20,7 +20,7 @@ import operator
 def sigma_clipping(image_data):#,fname):
 	#global badframetable
 	#global tossed
-	sig_clipped_data=sigma_clip(image_data, sigma=4, iters=2, cenfunc=np.mean,axis=0)
+	sig_clipped_data=sigma_clip(image_data, sigma=4, iters=2, cenfunc=np.median,axis=0)
 	return sig_clipped_data
 
 def bgsubtract(image_data):
@@ -80,7 +80,6 @@ def bgnormalize(image_data,normbg):
 	xmask[:,:,:]= False
 	xmask[:,13:18,13:18]=True
 	masked= np.ma.masked_array(image_data, mask=xmask)
-	#print masked[5][12:19,12:19]
 	bgsum = np.zeros(64)
 	# Replace for loop with one line code
 	for i in range (64):
@@ -141,39 +140,51 @@ def plotcurve(xax,f,b,X,Y):
 	axes[3].set_xlabel('Frame number')
 
 	fig.subplots_adjust(wspace=0)
-	plt.savefig('preprocsdB-sim'+'.png')
+	
+	plt.savefig('preprocsdB-real1r46468096'+'.png')
 
 #Normalised and stacked
 normbg=[]
 normf=[]
 normx=[]
 normy=[]
-path='/home/hema/Desktop/Link to mcgill/handy/datasample/simulated'
+path='/media/hema/New Volume1/S4/Summer/personal/mc gill space center/archives/aorkeys-20-selected_AORs/r46468096/ch2/bcd'
 #xn=1
-#for filename in glob.glob(os.path.join(path, '*bcd.fits')):
+#for filename in glob.glob(os.path.join(path, '*bcd.fits')
 ct=0
 for filename in glob.glob(os.path.join(path, '*bcd.fits')):
 	f=fits.open(filename)
-	if(ct==250):
+	if(ct==100):
 		break
 	image_data0=f[0].data
 	# convert MJy/str to electron count
 	convfact=f[0].header['GAIN']*f[0].header['EXPTIME']/f[0].header['FLUXCONV']
 	image_data1=image_data0#*convfact
-
+	
 	#sigma clip
 	image_data2=sigma_clipping(image_data1)
 	#bg subtract
 	image_data3=bgsubtract(image_data2)
-		#centroid
+
+	'''
+	if(ct==1):
+		print image_data1[5]
+		print 'image_data2'
+		print image_data2[5]
+		print 'image_data3'
+		print image_data3[5]
+	'''
+
+	#centroid
 	xo, yo = centroid(image_data3)
 	#aperture photmetry
 	ape_sum=aperphot(image_data3,2.5,xo,yo)
-
 	bgnormalize(image_data1,normbg)
 	normstar(ape_sum,normf)
 	normxycent(xo,yo,normx,normy)
+
 	ct+=1
+
 print ct
 normf,normbg,normx,normy=reshapelists(normf,normbg,normx,normy,ct)
 normf,normbg,normx,normy=stackit(normf,normbg,normx,normy)
