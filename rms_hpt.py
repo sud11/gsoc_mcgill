@@ -46,9 +46,9 @@ def sigma_clipping(image_data):#,fname):
 
 def bgsubtract(image_data):
 	bgsubimg=image_data
-	x=np.ndarray ( shape=(len(image_data),32,32), dtype=bool)
-	xmask=np.ma.make_mask(x,copy=True, shrink=True, dtype=np.bool)
-	xmask[:,:,:]= False
+	x=np.ndarray ( shape=(len(image_data),32,32), dtype=np.bool)
+	xmask=np.ma.make_mask(x,copy=True, shrink=True,dtype=np.bool)
+	xmask[:,:,:] = False
 	xmask[:,14:18,14:18]=True
 	#xmask[:,0:1,:]=True
 	masked= np.ma.masked_array(bgsubimg, mask=xmask)
@@ -93,6 +93,63 @@ def normstar(ape_sum):
 	ape_sum=ape_sum/starmean
 	return ape_sum
 
+def getflist(allstackd):
+	#Converting to numpy ndarray
+	allstackd=np.asarray(allstackd)
+	#print allstackd[4,13:18,13:18]
+	#Boxcar Smooth
+	temp=np.apply_along_axis(lambda m: convolve(m, Box1DKernel(50)), axis=0, arr=allstackd)
+	#print temp[4,13:18,13:18]
+	#Smoothening
+	allstackd-=temp
+	#allstackd1=np.subtract(allstackd,temp)
+
+	image_data1= sigma_clipping(temp)
+	image_data2= bgsubtract(image_data1)
+	cx, cy = centroid(image_data2)
+
+	#apertures
+	xax=np.arange(1.5,4.75,step=0.25)
+	flist=map(lambda t: aperphot(image_data2,t,cx,cy), xax)
+	#print 'aperturephot',time()-clo
+	flist = map(normstar,flist)
+	flist = map( lambda t: t-1, flist)
+	#print 'after norm',flist[0][10:30]
+
+	'''
+	print 'dimensions of flist',len(flist),len(flist[0])
+	print 'step1',flist[0]
+	tempo=np.square(flist[0])
+	print 'square',tempo[10:30]
+	print 'nanmean',np.nanmean(np.square(flist[0]))
+	print 'rms',np.sqrt(np.nanmean(np.square(flist[0])))
+	'''
+	flist=map(lambda t: np.sqrt(np.nanmean(np.square(t))), flist)
+	print 'after:'
+	print 'dimensions of flist',len(flist)
+	return flist
+
+def tossoutframe(allstackd):
+	#5 sigmaclip of x0,y0,F
+	allstackd=np.asarray(allstackd)
+	temp=np.apply_along_axis(lambda m: convolve(m, Box1DKernel(50)), axis=0, arr=allstackd)
+	#print temp[4,13:18,13:18]
+	#Smoothening
+	allstackd-=temp
+	image_data1= sigma_clipping(temp)
+	image_data2= bgsubtract(image_data1)
+	cx, cy = centroid(image_data2)
+	cx=sigma_clip(cx,sigma=5)
+	cy=sigma_clip(cy,sigma=5)
+	xax=np.arange(1.5,4.75,step=0.25)
+	flist=map(lambda t: sigma_clip(aperphot(image_data2,t,cx,cy),sigma=5), xax)
+	flist=np.asarray(flist)
+	flist = map(normstar,flist)
+	flist = map( lambda t: t-1, flist)
+	flist=map(lambda t: np.sqrt(np.nanmean(np.square(t))), flist)
+	return flist
+
+
 def plotandsave(xax,yax,xlabl,ylabl,fname):
 	plt.clf()
 	# y_formatter for pretty printing scale values
@@ -105,32 +162,59 @@ def plotandsave(xax,yax,xlabl,ylabl,fname):
 	#plt.xlim([min(xax) - 0.25, max(xax) + 0.25])
 	plt.xlabel(xlabl,fontsize=8)
 	plt.ylabel(ylabl,fontsize=8)
-	plt.savefig(fname+'.png',bbox_inches='tight',dpi=200)
+	plt.savefig('paneltest/'+fname+'.png',bbox_inches='tight',dpi=200)
+
+def plotcurve(xax,flist,ct):
+	fig, axes = plt.subplots(nrows=3, ncols=1, sharex=True)
+	plt.minorticks_on()
+	fig.subplots_adjust(hspace = 0.001)
+	plt.rc('font', family='serif')
+	#fig.subplots_adjust(.15,.15,.9,.9,0,0)
+	y_formatter = matplotlib.ticker.ScalarFormatter(useOffset=False)
+	
+	axes[0].plot(xax,flist[0],'xb-')
+	axes[0].set_ylabel(r'$raw RMS$',fontsize=16)
+	axes[0].yaxis.set_major_formatter(y_formatter)
+	axes[0].yaxis.set_major_locator(MaxNLocator(prune='both',nbins=5))
+
+	axes[1].plot(xax,flist[1],'xb-')
+	axes[1].set_ylabel(r'$frames RMS$',fontsize=16)
+	axes[1].yaxis.set_major_formatter(y_formatter)
+	axes[1].yaxis.set_major_locator(MaxNLocator(prune='both',nbins=5))
+
+	axes[2].plot(xax,flist[2],'xb-')
+	axes[2].set_ylabel(r'$\sigma-clipped$',fontsize=16)
+	axes[2].set_xlabel(r'$Frame$ $number$',fontsize=16)
+	axes[2].yaxis.set_major_formatter(y_formatter)
+	axes[2].yaxis.set_major_locator(MaxNLocator(prune='both',nbins=5))
+	plt.savefig('paneltest/rms3panesl'+str(ct)+'.png',bbox_inches='tight',dpi=200)
 
 #note that the outerpath must be complete with terminating '/'
 outerpath='/home/hema/Documents/mcgill/handy/aorkeys-20-selected_AORs/'
 dirs=os.listdir(outerpath)
 print dirs
-allstackd=[]
+allstackd1=[]
+allstackd2=[]
 flist=[]
 counter=0
+ct=0
 for direc in dirs :
 	print direc
-	if(counter==5):
+	if(counter==1):
 		break
 	path=outerpath+direc+'/ch2/bcd'
-	ct=0
 	for filename in glob.glob(os.path.join(path, '*bcd.fits')):
 		#print filename
-		#if(ct==10):
-		#	break
+		if(ct==5):
+			break
 		f=fits.open(filename,mode='readonly')
 		image_data0=f[0].data
 		# convert MJy/str to electron count
 		convfact=f[0].header['GAIN']*f[0].header['EXPTIME']/f[0].header['FLUXCONV']
 		image_data1=image_data0*convfact
 		#smoothed_signal = convolve(noisy_signal, Box1DKernel(11))
-		allstackd.extend(image_data1)
+		allstackd1.extend(image_data1)
+		allstackd2.extend(image_data1[1:])
 		#plt.imshow(smoothed_signal)
 		#plt.show()
 		ct+=1
@@ -138,44 +222,29 @@ for direc in dirs :
 		#plotandsave(yo,gy,r'$y_0$',r'$G y_0$','y0_vs_Gyo_'+filename[filename.find('I2_')+3: len(filename)-5])
 	print 'ct',ct
 	counter+=1
-#Converting to numpy ndarray
-allstackd=np.asarray(allstackd)
-#print allstackd[4,13:18,13:18]
-#Boxcar Smooth
-temp=np.apply_along_axis(lambda m: convolve(m, Box1DKernel(50)), axis=0, arr=allstackd)
-#print temp[4,13:18,13:18]
-#Smoothening
-allstackd-=temp
-#allstackd=np.subtract(allstackd,temp)
 
-image_data1= sigma_clipping(temp)
-image_data2= bgsubtract(image_data1)
-cx, cy = centroid(image_data2)
 
-#apertures
+flist1= getflist(allstackd1)
+flist2=getflist(allstackd2)
+flist3=tossoutframe(allstackd2)
+
+#flist4 = map(normstar,flist4)
+#flist4 = map( lambda t: t-1, flist4)
+#flist4=map(lambda t: np.sqrt(np.nanmean(np.square(t))), flist4)
+
+flist.append(flist1)
+flist.append(flist2)
+flist.append(flist3)
+
 xax=np.arange(1.5,4.75,step=0.25)
+plotcurve(xax,flist,ct)
+#plotandsave(xax,flist1,'Aperture radius (pixels) ','raw RMS','rmstest7_1aor_10f_p1')
+#plotandsave(xax,flist2,'Aperture radius (pixels) ','frames RMS','rmstest7_1aor_10f_p2')
+#plotandsave(xax,flist3,'Aperture radius (pixels) ','sig clipped','rmstest7_1aor_10f_p3')
+#plotandsave(xax,flist4,'Aperture radius (pixels) ','panel4 ','rmstest7_1aor_10f_p4')
 
-flist=map(lambda t: aperphot(image_data2,t,cx,cy), xax)
-#print 'aperturephot',time()-clo
 
-#Track the change which normalisation brings to data
-#print 'before norm',flist[0][10:30]
-flist = map(normstar,flist)
-flist = map( lambda t: t-1, flist)
-#print 'after norm',flist[0][10:30]
 
-'''
-print 'dimensions of flist',len(flist),len(flist[0])
-print 'step1',flist[0]
-tempo=np.square(flist[0])
-print 'square',tempo[10:30]
-print 'nanmean',np.nanmean(np.square(flist[0]))
-print 'rms',np.sqrt(np.nanmean(np.square(flist[0])))
-'''
-flist=map(lambda t: np.sqrt(np.nanmean(np.square(t))), flist)
-print 'after:'
-print 'dimensions of flist',len(flist)
-plotandsave(xax,flist,'Aperture radius (pixels) ','F RMS','rmstest4')
 
 '''
 F = aperphot(image_data2, 1.5,cx,cy)
