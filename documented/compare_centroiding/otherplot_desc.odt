@@ -1,0 +1,9 @@
+﻿sigma_clipping()
+bgsubtract()
+centroid()
+centroidg2d()
+
+Notes -
+
+We have found the centroids using both the centroiding methods and plotted them with the centroid found bt flux weighted method in the x axis and using gauss2d in the y axis. We have used least-squares to fit a straight line to the datapoints in the plot. 
+ 
