@@ -1,0 +1,102 @@
+﻿
+
+
+Description of aper-phot.py
+
+
+Main modules:
+1. sigma_clipping(image_data, filenb, fname)
+2. bgsubtract(image_data)
+3. centroid(image_data)
+4. photometry(image_data, ape_radius, cx, cy, bg_err)
+5. getfnames (root)
+
+
+
+sigma_clipping(image_data, filenb, fname)
+
+Parameters 
+
+image_data – The image cube on which sigma clipping must be performed.
+filenb – File number to keep track of the tossed out frames
+fname – File name to keep track of the tossed out frames
+
+To perform pixel level sigma clipping on the image cube where each pixel of a frame is compared to the same pixel of the median of all frames in the image cube, we use the image_clip() function from astropy.stats.
+The sigma 
+
+The number of iterations is 4
+
+
+sig_clipped_data=sigma_clip(image_data, sigma=4, iters=2, cenfunc=np.median,axis=0)
+
+Returns
+
+It returns the sig_clipped_data by masking the sigma-clipped pixels and frames that are tossed out.
+
+If the sigma-clipped pixel happens to be in the cetral 7x7 pixel box, then the whole frame is tossed out.
+
+Notes
+
+
+
+bgsubtract(image_data)
+
+Parameters 
+
+image_data – Data cube on which background subtraction must be performed
+
+
+We first mask the central 5x5 pixels of all frames of the datacube.
+
+For each frame i in the central-pixels-masked-datacube, we find the median flux of the background and subtract this value from all the pixels of frame i in the original background.
+
+bgsubtract() the background subtracted image cube and also the error in background of each frame.
+
+
+Centroid(image_data):
+
+Compute the centroid coordinates in each frame and return x,y lists
+For each frame i in the image cube image_data, we find the centroid coordinates through weighted flux method.
+
+Parameters:
+	image_data: The image cube that has frames for which centers have to be found
+
+Returns: 
+	cx, cy : cx is a list that holds x coordinates where cx[i] is the x coordinate of the centroid of frame i in image_data.
+cy is a list that holds x coordinates where cx[i] is the x coordinate of the centroid of frame i in image_data.
+
+
+
+getfnames(root=”/home/SHA_archives/XO-3b/”,nfiles=1)
+
+Performs a deep search for FITS file in directories and subdirectories of the root folder and returns a list of paths of the FITS files. The FITS files are sorted based on AINTBEG parameter found in the FITS header.
+
+Paramter : 
+	root: path of folder under which the code should search for
+
+Returns: 
+	list of paths to FITS files under
+
+
+
+__main__
+
+For each file name in fnames,
+	open the file.
+	Store the image data in image_data0
+	Convert units from MJ y/str to electron count
+	perform pixel level sigmaclipping
+	perform background subtraction
+	find centroids
+	toss out bad centroids
+	find the flux of the star
+	update flux array
+	
+
+Plot
+
+	
+
+
+
+
