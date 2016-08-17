@@ -1,0 +1,15 @@
+﻿
+
+
+Description of plotfits.py code
+
+
+
+
+The plotimgcube(path,pdfname) function of plotfits.py reads the FITS file and plots the frames of the image cube and the median stacked version of the image cube. It saves the plots in pdf with name pdfname.
+
+
+
+
+
+

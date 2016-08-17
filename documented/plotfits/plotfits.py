@@ -1,6 +1,6 @@
 #--------------------------------------------------------------
 #Author: Lisa Dang & Sudarsan S
-#Created: 2016-07-28 09:02 PM IST
+#Created: 2016-07-28 11:32 AM EST
 #Last Modified: 
 #Title: Plot the fits image cube
 #Test data:AOR r46470912- SPITZER_I2_46470912_0000_0000_2_bcd.fits
@@ -24,7 +24,6 @@ def plotimgcube(path,pdfname='dispimgcube'):
 		
 	image_data = f[0].data
 	tam = image_data[0].shape
-	print 'tam',tam
 	#stacking 64 into 1 image by taking pixel wise median
 	pdf =PdfPages(pdfname)
 
