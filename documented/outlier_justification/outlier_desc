@@ -1,0 +1,100 @@
+﻿
+sigma_clipping()
+
+bgsubtract()
+
+centroid()
+
+aperphot()
+
+centroidg2d(image_data)
+
+Parameters:
+	
+	image_data : image data cube
+	
+Returns:
+	list ... (copy paste from centroid)
+
+psfwidth(image_data, xo,yo, edg):
+
+Parameters:
+		image_data : image data cube
+		edg : length of the pixel box
+		xo : list of x coordinate of centroid of the frames in imagecube
+		yo : list of y coordinate of centroid of the frames in imagecube
+
+Returns :
+	psfxw: List of psf width in x direction for the frames in image_data
+	psfyw: list of psf width in y direction for the frames in image_data
+
+
+noisepixparam(image_data,edg)
+
+Find noise pixel parameter (beta) for each frame in image_data.
+
+Parameters: 
+		image_data : image data cube
+		edg : length of pixel box
+		
+Returns : 
+		npp – list of noise pixel parameter corresponding to frames in image_data
+
+
+bgnormalize(image_data,normbg)
+
+Parameters:
+	image_data:
+	normbg: List that acuumulates the normalised background flux of frames
+
+Returns:
+	normbg : list that hold background flux
+
+Notes:
+
+The central 5x5 box is masked (as it is the star) and the remaining is the background. The background for each frame is found and stored in the list bgsum.
+
+Bgsum is normalised to mean and the resulting list is appended to normbg.
+
+
+
+
+stackit(normf,normbg,normx,normy,normGx,normGy,normpsfwx,normpsfwy,normnpp)
+
+Parameters:
+	normf – The 2d list that has normalised stellar flux list. normf[i][j] is the flux of the jth frame of ith data cube.
+	normbg - The 2d list that has normalised background flux list 
+	normx -
+	normy -
+	normGx
+	normGy
+	normpsfwx
+	normpsfwy
+	normpp
+
+return bnormf – The frame-wise median binned version of normf
+	 bnormbg,bnormx,bnormy,bnormGx,bnormGy,bnormpsfwx,bnormpsfwy,bnormnpp
+	
+
+
+	
+
+
+
+Plotting 
+	plot for the following panels with frame number as common x axis:
+	1. Stellar flux (F)
+	2. Background flux (B)
+	3. x centroid coordinate found using flux weighted method (x0)
+	4. y centroid  coordinate found using flux weighted method	(y0)
+	5. x centroid coordinate found using Gaussian 2d centroiding (Gx0)
+	6. y centroid coordinate found using flux weighted method (Gy0)
+	7. PSF width in x direction (sigma x)
+	8. PSF width in y direction (sigma y)
+	9. Noise pixel parameter (beta)
+
+Notes -
+
+The we have marked the points on curve where the deviation of flux from median is twice the standard deviation with red 'x', implying that the frames needs to be tossed. If the flux is found to be alright, then they are marked with green boxes.
+
+

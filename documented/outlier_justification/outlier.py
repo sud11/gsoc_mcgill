@@ -1,3 +1,11 @@
+#--------------------------------------------------------------
+#Author: Lisa Dang & Sudarsan 
+#Created: 2016-06-01 07:55 AM EST
+#Last Modified: 
+#Title: To justify why 1st and 58 frames are outliers
+#--------------------------------------------------------------
+
+
 # To justify why 1st and 58 frames are outliers
 # Do an aperture photometry and verify.
 
@@ -42,7 +50,7 @@ def sigma_clipping(image_data):#,fname):
 def bgsubtract(image_data):
 	bgsubimg=image_data
 	x=np.ndarray ( shape=(64,32,32), dtype=bool)
-	xmask=np.ma.make_mask(x,copy=True, shrink=True, dtype=np.bool)
+	xmask=np.ma.make_mask(x,copy=True, shrink=True, dtype=bool)
 	xmask[:,:,:]= False
 	xmask[:,13:18,13:18]=True
 	xmask[:,0:1,:]=True
@@ -94,6 +102,7 @@ def centroidg2d(image_data):
 def aperphot(image_data,ape_radius,cx,cy):
 	ape_sum=np.zeros(64)
 	for i in range(64):
+
 		position=[cx[i],cy[i]]
 		aperture=CircularAperture(position,r=ape_radius)
 		phot_table=aperture_photometry(image_data[i,:,:],aperture)
@@ -192,16 +201,16 @@ def noisepixparam(image_data,edg):
 	return npp
 
 def bgnormalize(image_data,normbg):
-	x=np.ndarray( shape=(64,32,32), dtype=bool)
+	x=np.ndarray( shape=(64,32,32), dtype=np.bool)
 	xmask=np.ma.make_mask(x,copy=True, shrink=True, dtype=np.bool)
 	xmask[:,:,:]= False
 	xmask[:,13:18,13:18]=True
+	
 	masked= np.ma.masked_array(image_data, mask=xmask)
-	#print masked[5][12:19,12:19]
 	bgsum = np.zeros(64)
 	# Replace for loop with one line code
 	for i in range (64):
-		bgsum[i] = np.nanmean(masked[i]) #np.ma.mean
+		bgsum[i] = np.nanmean(masked[i]) #np.ma.mean ; median and nanmedian doesn't work here
 	#background average for the datecube
 	bgdcbavg= np.nanmean(bgsum)
 	#Normalize
@@ -212,7 +221,7 @@ def bgnormalize(image_data,normbg):
 	#bg_avg = np.mean(bgsum)
 	#bgsum=bgsum/
 def normstar(ape_sum,normf):
-	starmean=np.nanmean(ape_sum)
+	starmean=np.nanmedian(ape_sum)
 	ape_sum=ape_sum/starmean
 	normf.append(ape_sum)
 	#print min(enumerate(normf), key=operator.itemgetter(1))
@@ -239,16 +248,16 @@ def normnoisepix(npp,normnpp):
 	normnpp.append(npp)
 
 def stackit(normf,normbg,normx,normy,normGx,normGy,normpsfwx,normpsfwy,normnpp):
-	normf=np.nanmean(normf,axis=0)
-	normbg=np.nanmean(normbg, axis=0)
-	normx=np.nanmean(normx,axis=0)
-	normy=np.nanmean(normy,axis=0)
-	normGx=np.nanmean(normGx,axis=0)
-	normGy=np.nanmean(normGy,axis=0)
-	normpsfwx=np.nanmean(normpsfwx,axis=0)
-	normpsfwy=np.nanmean(normpsfwy,axis=0)
-	normnpp=np.nanmean(normnpp,axis=0)
-	return normf,normbg,normx,normy,normGx,normGy,normpsfwx,normpsfwy,normnpp
+	bnormf=np.nanmedian(normf,axis=0)
+	bnormbg=np.nanmedian(normbg, axis=0)
+	bnormx=np.nanmedian(normx,axis=0)
+	bnormy=np.nanmedian(normy,axis=0)
+	bnormGx=np.nanmedian(normGx,axis=0)
+	bnormGy=np.nanmedian(normGy,axis=0)
+	bnormpsfwx=np.nanmedian(normpsfwx,axis=0)
+	bnormpsfwy=np.nanmedian(normpsfwy,axis=0)
+	bnormnpp=np.nanmedian(normnpp,axis=0)
+	return bnormf,bnormbg,bnormx,bnormy,bnormGx,bnormGy,bnormpsfwx,bnormpsfwy,bnormnpp
 
 
 def plotcurve(xax,f,b,X,Y,GX,GY,wx,wy,npp,direc,ct):
@@ -333,17 +342,16 @@ def plotcurve(xax,f,b,X,Y,GX,GY,wx,wy,npp,direc,ct):
 	axes[8].yaxis.set_major_formatter(y_formatter)
 	axes[8].yaxis.set_major_locator(MaxNLocator(prune='both',nbins=5))
 
-	plt.savefig('test/4.5_'+str(ct)+'_'+direc+'.png',bbox_inches='tight',dpi=500)
+	plt.savefig('3.6test/'+str(ct)+'_'+direc+'.png',bbox_inches='tight',dpi=500)
 
 #note that the outerpath must be complete with terminating '/'
-outerpath='/home/hema/Documents/mcgill/handy/aorkeys-20-selected_AORs/'
+outerpath='/home/hema/Documents/mcgill/handy/3.6m/'
 dirs=os.listdir(outerpath)
 print dirs
 counter=0
-for direc in dirs :
+for direc in ['r46482688']:
 	print direc
-	if(counter==10):
-		break
+
 	normbg=[]
 	normf=[]
 	normx=[]
@@ -353,14 +361,14 @@ for direc in dirs :
 	normpsfwx=[]
 	normpsfwy=[]
 	normnpp=[]
-	path=outerpath+direc+'/ch2/bcd'
+	path=outerpath+direc+'/ch1/bcd'
 	print path
 	#xn=1
 	ct=0
 	print counter
 	for filename in glob.glob(os.path.join(path, '*bcd.fits')):
 		#print filename
-		#if(ct==100):
+		#if(ct==1):
 		#	break
 		print ct
 		f=fits.open(filename,mode='readonly')
