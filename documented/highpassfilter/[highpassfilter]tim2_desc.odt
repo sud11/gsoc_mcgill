@@ -1,0 +1,123 @@
+﻿sigma_clipping(image_data):
+
+Parameters:
+
+returns:
+	tempo- datacube with sigma_clipped data
+	toss – list of the number of sigma-clipped frame
+	 
+Fixed window sigma clipping is implemeted here.
+
+We divide the frames in image_cube into chunks of window size 20 and perform sigma-clipping on each chunk.
+
+for i in range (len(image_data)/20):
+	temp,to=sigclip(image_data[i*20:(i+1)*20])
+	tempo.extend(temp)
+	# Keeping count of number of frames tossed
+	tot+=len(to)
+	if(len(to)>0):
+		to=np.asarray(list(to))+i*20
+		toss.extend(to)
+
+Perform sigma_clipping for the rest of the frames
+if( len(tempo) < len(image_data)):
+		tem,to=sigclip(image_data[(fin+1)*20:])
+		to=np.asarray(list(to))+(fin+1*20)
+		toss.extend(to)
+		tempo.extend(tem)
+
+
+	
+
+def aperphot(image_data,ape_radius,cx,cy,op):
+
+Parameters:
+	image_data
+	ape_radius – the aperture radius to perform aperture photometry
+	cx – list of x centroid coordinates corresponding to the frames in image_data
+	cy -list of x centroid coordinates corresponding to the frames in image_data
+	op – if op is 1 then, aperture photometry using hard aperture
+	     if op is 0 then, aperture photometry using soft aperture
+
+
+
+getflist( allstackd,op):
+
+Parameters:
+
+allstackd – image cube 	
+op – if op is 1 then, aperture photometry using hard aperture
+	     if op is 0 then, aperture photometry using soft aperture
+
+returns – 
+	flist -the stellar flux list corresponding to the frames in the image cube 
+
+Notes
+	
+	Perfrom aperture photometry on the imagedatacube and return the flux list.
+
+
+
+def highpassflist(allstackd,op):
+
+	Parameters:
+		allstackd – Image data cube
+		op - 
+
+	returns :
+		flist1 – original flux list
+		flist2 – boxcar smoothed flux list
+		smooth – high pass filtered flux list
+				
+# Perform aperture photometry on the frames of allstackd
+# flist1 is the list of stellar flux of frames in allstackd
+flist1=getflist(allstackd,op)
+
+# Boxcar smooth flist1 with window size as 50
+flist2 = convolve(flist1, Box1DKernel(50),boundary='extend')
+
+#Subtract the smoothed flux list from the orignal flux list
+smooth=flist1-flist2
+
+
+
+masterfunc(op)
+	
+	Parameters – op
+
+	returns -
+		panels
+		toss – list of the frame number of tossed frames
+
+	
+	#get the high pass original flux list, boxcar smoothed flux list and the high pass filtered fluxlist
+	panel1,panel2,smooth1=highpassflist(allstackd1,op)
+
+	# beforenan holds the indices where the value is NaN for high passed flist
+	beforenan= np.argwhere(np.isnan(smooth1))
+	beforenan=beforenan.flatten()
+
+	#Perform simg_clip on the high pass filtered flux list
+	panel3= sigma_clip(smooth1,sigma=5,cenfunc=np.nanmedian)
+
+	
+	#set the sigma-clipped pixels to NaN
+	tosstemp= [i for i, x in enumerate(panel3.mask) if x]
+	panel3=np.asarray(panel3)
+	for x in tosstemp:
+		panel3[x]=np.nan
+	# afternan holds the indices of NaN values after the sigma-clipping	
+	afternan = np.argwhere(np.isnan(afternan))
+	
+	#toss holds the list of number of frame that was tossed out in the previous sigma_clip process
+	toss = set(tosstemp) – set(beforenan)
+	
+	
+	--Main--
+	allstackd1
+
+	Read image cubes and append them to allstackd1 to create one big image cube.
+	
+	Call masterfunc1
+
+plot for panels
